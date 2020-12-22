@@ -23,9 +23,14 @@ def budget_grabber(scope):
     with open('budget.txt','r') as f:
         budget_list_0 = f.readlines()
         budget_list_1 = [x.strip('\n') for x in budget_list_0]
-    # Makes list into tuples, split at comma
-    #####budget_tuples_0 = [tuple(map(str, sub.split(', '))) for sub in budget_list]
+    # Makes list into tuples, split at semi-colon
     budget_tuples_0 = [list(map(str, sub.split('; '))) for sub in budget_list_1]
+# transaction[0] == Amount      \ Float
+# transaction[1] == Value (+/-) \ String
+# transaction[2] == Tag(s)      \ List
+# transaction[3] == Description \ String
+# transaction[4] == Date        \ String sep. by commas
+# transaction[5] == Account     \ String
     for transaction in budget_tuples_0:
         if iso_checker(transaction[4]) == True:
             budget_tuples.append(transaction)
@@ -36,17 +41,17 @@ def budget_grabber(scope):
                 recurring_dates.append([transaction[0], transaction[1], transaction[2], transaction[3], date_recur])
     for item in recurring_dates:
         budget_tuples.append(item)
-    # Makes first entry of tuple (money) a float; includes Descrip. + Tag + Date
+    # Makes first entry of tuple (money) a float; includes Descrip. + Tag + Date + Account
     if scope == 'full':
         for transaction in budget_tuples:
             # Populates income list
             if transaction[1] == '+':
                 num = float(transaction[0])
-                income.append((num, transaction[2], transaction[3], transaction[4]))
+                income.append((num, transaction[2], transaction[3], transaction[4], transaction[5]))
             # Populates expense list
             elif transaction[1] == '-':
                 num = float(transaction[0])
-                expense.append((num, transaction[2], transaction[3], transaction[4]))
+                expense.append((num, transaction[2], transaction[3], transaction[4], transaction[5]))
         balance = (income, expense)
     # Only populates with Amount/Date
     elif scope == 'short':
@@ -131,6 +136,7 @@ def budget_add():
             # Calls Value, Amount, Date, and Tag functions seperately
             transaction_value = value_input()
             transaction_amount = amount_input()
+            transaction_account = account_input()
             transaction_date = date_input('r')
             transaction_description = input('Short Description :: ')
             # If no description is given, writes '-' so program doesn't break
@@ -142,6 +148,7 @@ def budget_add():
             # Calls Value, Amount, Date, and Tag functions seperately
             transaction_value = value_input()
             transaction_amount = amount_input()
+            transaction_account = account_input()
             transaction_date = date_input('s') 
             transaction_description = input('Short Description :: ')
             # If no description is given, writes '-' so program doesn't break
@@ -166,7 +173,7 @@ def budget_add():
     else:
         pass
     try:
-        transaction = f'{transaction_amount}; {transaction_value}; {transaction_description}; {transaction_tag}; {transaction_date}\n'
+        transaction = f'{transaction_amount}; {transaction_value}; {transaction_description}; {transaction_tag}; {transaction_date}; {transaction_account}\n'
     # Writes transaction to file
         with open('budget.txt','a') as f:
             f.write(transaction)
@@ -462,7 +469,7 @@ def value_input():
         except IndexError:
             print('\n! No Input !\n')
 
-# Takes tags for budget_editor; writes to tags.txt, returns string
+# Takes tags for budget_editor; writes to tags.txt, returns list
 def tag_input():
     input_tags = []
     export_tag_list = []
@@ -516,9 +523,62 @@ def tag_input():
     for input_tag_f in export_tag_list:
         print(f'\t$\t{input_tag_f}')
     return export_tag_list
-# Make a function that handles "accounts" (cash, bank, venmo, etc)
+
+# Handles accounts (same as input_tags); writes to accounts.txt, returns list
 def account_input():
-    pass
+    input_tags = []
+    export_tag_list = []
+    new_tag_list = []
+    with open('accounts.txt','r') as f:
+        tag_list_0 = f.readlines()
+        tag_list = [x.strip('\n') for x in tag_list_0]
+    repeat = True
+    while repeat == True:
+        # enter * to view Tags; Commas separate tags
+        input_tag0 = input('Account :: ')
+        input_tags = input_tag0.split(',')
+        input_tags = [x.strip(' ') for x in input_tags]
+        for input_tag in input_tags:
+            if not input_tag:
+                pass
+            elif input_tag == '*':
+                print('\nAccounts:\n')
+                for tag in tag_list:
+                    print(f'$- {tag}')
+                print('\n')
+            else:
+                for tag in tag_list:
+                    if input_tag.upper() == tag:
+                        repeat = False
+                        export_tag_list.append(input_tag.upper())
+                        match = 0
+                        break
+                    else:
+                        match = 1
+                if match == 0:
+                    pass
+                elif match == 1:
+                    add_tag = input(f"'{input_tag.upper()}' not Found. Add Account (y/n)? : ")
+                    if add_tag.lower() == 'y':
+                        new_tag_list.append(input_tag.upper())
+                        export_tag_list.append(input_tag.upper())
+                    elif add_tag.lower() == 'n':
+                        if not export_tag_list:
+                            pass
+                        else:
+                            break
+        if not export_tag_list:
+            print('Enter at least 1 Account')
+            pass
+        else:
+            break
+    with open('accounts.txt','a') as g:
+        for a_tag in new_tag_list:
+            g.write(f'{a_tag}\n')
+    for input_tag_f in export_tag_list:
+        print(f'\t$\t{input_tag_f}')
+    return export_tag_list
+
 # Truncates Numbers ; returns float 
 def truncate(number, digits) -> float:
         stepper = 10.0 ** digits
