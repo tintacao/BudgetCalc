@@ -1,6 +1,4 @@
-
-
-#                                                           Imports
+###                         Imports
 ##################################################################
 
 import datetime
@@ -181,6 +179,10 @@ def budget_add():
     except UnboundLocalError:
         print('ERROR -- RESTARTING')
         return budget_add() 
+# Deletes / Replaces transactions; edits budget.txt; passes additions to budget_add
+def budget_remove():
+    pass
+
 
 # Takes Date inputs for budget_editor; returns either DateofTransaction or Tuple with Dates of Transactions
 def date_input(occurence):
